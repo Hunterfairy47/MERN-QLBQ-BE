@@ -35,4 +35,6 @@ router.post("/register", ValidRegister, authController.register);
 
 router.post("/active", authController.activeAccount);
 
+router.post("/login", authController.login);
+
 export default router;

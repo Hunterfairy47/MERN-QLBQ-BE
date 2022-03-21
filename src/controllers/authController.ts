@@ -1,11 +1,15 @@
 import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { generateActiveToken } from "../config/generateToken";
+import {
+  generateAccessToken,
+  generateActiveToken,
+  generateRefreshToken,
+} from "../config/generateToken";
 import { IDecodedToken } from "../config/interface";
 import sendEmail from "../config/senMail";
 import { validateEmail } from "../middleware/validRegister";
-import Users from "../models/user";
+import Users from "../models/userModel";
 
 const CLIENT_URL = `${process.env.BASE_URL}`;
 
@@ -17,7 +21,7 @@ const authController = {
       const user = await Users.findOne({ email });
       if (user) return res.status(400).json({ msg: "Email already exists!" });
 
-      const passwordHash = await bcrypt.hash(password, 12);
+      const passwordHash = await bcrypt.hash(password, 10);
 
       const newUser = {
         firstname,
@@ -61,8 +65,50 @@ const authController = {
       res.json({
         msg: `Account has been verify by ${newUser.email} ! waiting until management active your account!`,
       });
-    } catch (error) {
-      return res.status(500).json({ msg: error });
+    } catch (error: any) {
+      let errMsg;
+      if (error.code === 11000) {
+        errMsg = Object.keys(error.keyValue)[0] + "already exits.";
+      }
+      return res.status(500).json({ msg: errMsg });
+    }
+  },
+
+  login: async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      const user = await Users.findOne({ email });
+
+      if (!user) {
+        return res.status(400).json({ msg: "This account does not exits." });
+      }
+
+      //if user exits
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(400).json({ msg: "Password is incorrect." });
+      }
+
+      const access_token = generateAccessToken({ user });
+      const refresh_token = generateRefreshToken({ id: user._id });
+
+      res.cookie("refreshtoken", refresh_token, {
+        httpOnly: true,
+        path: `/api/refresh_token`,
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30days
+      });
+
+      res.json({
+        msg: "Login Success!",
+        access_token,
+        user: { ...user._doc, password: "" },
+      });
+
+      res.json({ msg: "Login success!" });
+    } catch (error: any) {
+      return res.status(500).json({ msg: error.message });
     }
   },
 };
