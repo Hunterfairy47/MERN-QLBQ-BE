@@ -1,13 +1,10 @@
-import { Request, Response } from "express";
-const express = require("express");
+import express from "express";
+import ingredientController from "../controllers/ingredientController";
+
 const router = express.Router();
 
-router.get("/", (req: Request, res: Response) => {
-  res.status(200).json({ message: "Get Ingredients" });
-});
+router.get("/ingredient", ingredientController.getIngredient);
+router.post("/ingredient/create", ingredientController.createIngredient);
+router.route("/ingredient/:id").patch(ingredientController.updateIngredient);
 
-router.post("/", (req: Request, res: Response) => {
-  res.status(200).json({ message: "post Ingredients" });
-});
-
-module.exports = router;
+export default router;

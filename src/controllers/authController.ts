@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import {
   generateAccessToken,
   generateActiveToken,
-  generateRefreshToken,
 } from "../config/generateToken";
 import { IDecodedToken } from "../config/interface";
 import sendEmail from "../config/senMail";
@@ -68,7 +67,7 @@ const authController = {
     } catch (error: any) {
       let errMsg;
       if (error.code === 11000) {
-        errMsg = Object.keys(error.keyValue)[0] + "already exits.";
+        errMsg = Object.values(error.keyValue)[0] + "already exits.";
       }
       return res.status(500).json({ msg: errMsg });
     }
@@ -86,27 +85,17 @@ const authController = {
 
       //if user exits
       const isMatch = await bcrypt.compare(password, user.password);
-
       if (!isMatch) {
         return res.status(400).json({ msg: "Password is incorrect." });
       }
 
-      const access_token = generateAccessToken({ user });
-      const refresh_token = generateRefreshToken({ id: user._id });
-
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: `/api/refresh_token`,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30days
-      });
+      const access_token = generateAccessToken({ id: user._id });
 
       res.json({
         msg: "Login Success!",
         access_token,
-        user: { ...user._doc, password: "" },
+        user: user._doc,
       });
-
-      res.json({ msg: "Login success!" });
     } catch (error: any) {
       return res.status(500).json({ msg: error.message });
     }

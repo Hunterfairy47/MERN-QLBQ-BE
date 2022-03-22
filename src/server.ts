@@ -5,7 +5,7 @@ import express, { Application } from "express";
 import morgan from "morgan";
 // Database
 import "./config/database";
-import routes from "./routes/index";
+import routes from "./routes";
 
 // Middleware
 const app: Application = express();
@@ -16,7 +16,7 @@ app.use(morgan("dev"));
 app.use(cookieParser());
 
 // Routes
-app.use("/api", routes.authRouter);
+app.use("/api", routes);
 
 // Server listening
 const PORT = process.env.PORT || 5000;

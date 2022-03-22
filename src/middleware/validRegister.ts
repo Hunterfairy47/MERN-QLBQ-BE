@@ -1,5 +1,17 @@
 import { NextFunction, Request, Response } from "express";
+// const registerSchema = Joi.object({
+//   firstname: Joi.string().min(3).max(20).required,
+//   lastname: Joi.string().min(3).max(20).required,
+//   phone: Joi.string()
+//     .length(10)
+//     .pattern(/^[0-9]+$/)
+//     .required(),
+//   office: Joi.string().required(),
+//   email: Joi.string().email(),
+//   password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
+// }).options({ abortEarly: false });
 
+// export default registerSchema;
 export const ValidRegister = async (
   req: Request,
   res: Response,
