@@ -62,9 +62,35 @@ export interface IDish {
   dishName: string;
   englishName: string;
   image: string;
-  MaLMA: string;
+  ingredients: string[];
+  typeDishId: string;
 }
 
 export interface IReqAuth extends Request {
   user?: IUser;
+}
+
+export interface ITrainingLevel {
+  _id: string;
+  trainingName: string;
+}
+
+export interface IMenu {
+  startDay: Date;
+  endDay: Date;
+  baseId: string;
+  trainingId: string;
+}
+
+export interface IDishDetails {
+  menuDetailsId: string;
+  ingredientIds: string;
+  quantity: Number;
+  realUnit: string;
+  price: Number;
+}
+export interface IMenuDetails {
+  dishId: string;
+  menuId: string;
+  date: Date;
 }
