@@ -3,11 +3,6 @@ import { IIngredient } from '../../config/interface';
 
 const ingredientSchema = new mongoose.Schema(
   {
-    _id: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     ingredientName: {
       type: String,
       required: [true, 'Please add your ingredientName'],
@@ -20,12 +15,11 @@ const ingredientSchema = new mongoose.Schema(
     nutritionDetail: [
       {
         nutritionId: { type: String, ref: 'Nutrition', required: true },
-        nutritionValue: { type: Number, required: true },
+        nutritionValue: { type: Number, required: true, default: 0 },
       },
     ],
   },
   {
-    _id: false,
     timestamps: true,
   }
 );

@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
+import Result from '../../utils/result';
 import TypeDish from './typeDish.model';
 
 const typeDishController = {
   getTypeDish: async (req: Request, res: Response) => {
     try {
       const typeDishs = await TypeDish.find();
-      res.json({ msg: 'get success!', typeDishs });
+      Result.success(res, { message: 'Get success!', typeDishs });
     } catch (error) {
-      return res.status(500).json({ msg: error });
+      return Result.error(res, { message: error });
     }
   },
 
@@ -15,17 +16,18 @@ const typeDishController = {
     try {
       const { typeDishName } = req.body;
       const typeDish = await TypeDish.findOne({ typeDishName });
-      if (typeDish) return res.status(400).json({ msg: 'Type of dish already exists!' });
+      if (typeDish) return Result.error(res, { message: 'Type of dish already exists!' });
 
       const newtypeDish = new TypeDish(req.body);
       await newtypeDish.save();
-      res.json({ msg: 'create success!' });
+
+      Result.success(res, { message: 'Create success!' });
     } catch (error: any) {
       let errMsg;
       if (error.code === 11000) {
         errMsg = Object.values(error.keyValue)[0] + ' already exits.';
       }
-      return res.status(500).json({ msg: errMsg });
+      return Result.error(res, { message: errMsg });
     }
   },
 };

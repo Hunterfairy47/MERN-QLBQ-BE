@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { IReqAuth } from '../../config/interface';
+import Result from '../../utils/result';
 import DishDetails from '../Dish/dishDetail.model';
 import Menu from './menu.model';
 import MenuDetails from './menuDetail.model';
@@ -12,13 +13,13 @@ const menuController = {
       const menuDetail = await MenuDetails.aggregate([
         {
           $match: {
-            _id: ObjectId(req.params.id),
+            date: new Date('2020-03-22T17:00:00.000+00:00'),
           },
         },
         {
           $lookup: {
             from: 'dishes',
-            localField: 'dishIds',
+            localField: 'dishId',
             foreignField: '_id',
             as: 'dishes',
           },
@@ -35,7 +36,8 @@ const menuController = {
           },
         },
       ]);
-      res.json({ msg: 'get success!', menuDetail });
+
+      Result.success(res, { message: 'Get success!', menuDetail });
     } catch (error) {
       next(error);
     }
@@ -44,13 +46,19 @@ const menuController = {
   updateMenuDetailsById: async (req: Request, res: Response, next: NextFunction) => {
     try {
       let list = req.body;
-      for (let i = 0; i < list.data.length; i++) {
-        await DishDetails.create({
-          menuDetailsId: req.params.id,
-          ...list.data[i],
-        });
+      let day = req.params.id;
+      const date = await MenuDetails.find({ date: day });
+      for (let i = 0; i < date.length; i++) {
+        for (let j = 0; j < list.data.length; j++) {
+          if (list.data[j].dishId === date[i].dishId && day === '2020-03-22T17:00:00.000+00:00') {
+            await DishDetails.create({
+              menuDetailsId: date[i]._id,
+              ...list.data[i],
+            });
+          }
+        }
       }
-      res.json({ msg: 'get success!' });
+      Result.success(res, { message: 'Post success!' });
     } catch (error) {
       next(error);
     }
@@ -60,10 +68,11 @@ const menuController = {
     try {
       const { _id } = req.body;
       const menus = await Menu.findOne({ _id });
-      if (menus) return res.status(400).json({ msg: 'Menu already exists!' });
+      if (menus) return Result.error(res, { message: 'Menu already exists!' });
       const newMenu = new Menu(req.body);
       await newMenu.save();
-      res.json({ msg: 'create success!' });
+
+      Result.success(res, { message: 'Create success!' });
     } catch (error: any) {
       next(error);
     }
@@ -78,7 +87,7 @@ const menuController = {
         await newMenuDetails.save();
       }
 
-      res.json({ msg: 'create success!' });
+      Result.success(res, { message: 'Create success!' });
     } catch (error: any) {
       next(error);
     }

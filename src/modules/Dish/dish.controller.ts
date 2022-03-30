@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { IReqAuth } from '../../config/interface';
+import Result from '../../utils/result';
 import Dish from './dish.model';
 
 const dishController = {
@@ -7,8 +8,6 @@ const dishController = {
     try {
       let Dishes = [];
       let typeDishId: string = (req.query.typedishId as string) || '';
-      console.log(typeDishId);
-
       // get dish by type of dish
       if (req.query.typedishId) {
         Dishes = await Dish.find({ typeDishId: typeDishId });
@@ -16,9 +15,9 @@ const dishController = {
         //get all dish
         Dishes = await Dish.find();
       }
-      res.json({ msg: 'get success!', Dishes });
+      Result.success(res, { message: 'Get Success', Dishes });
     } catch (error) {
-      return res.status(500).json({ msg: error });
+      return Result.error(res, { message: error });
     }
   },
 
@@ -26,13 +25,12 @@ const dishController = {
     try {
       const { dishName } = req.body;
       const dish = await Dish.findOne({ dishName });
-      if (dish) return res.status(400).json({ msg: 'Dish already exists!' });
 
-      console.log('req.body', req.body);
-
+      if (dish) return Result.error(res, { message: 'Dish already exists!' });
       const newDish = new Dish(req.body);
       await newDish.save();
-      res.json({ msg: 'create success!' });
+
+      Result.success(res, { message: 'create success!' });
     } catch (error: any) {
       let errMsg;
       if (error.code === 11000) {
@@ -41,7 +39,7 @@ const dishController = {
         let name = Object.keys(error.errors)[0];
         errMsg = error.errors[`${name}`].message;
       }
-      return res.status(500).json({ msg: errMsg });
+      return Result.error(res, { message: errMsg });
     }
   },
 };

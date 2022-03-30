@@ -1,14 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import { IReqAuth } from '../../config/interface';
+import Result from '../../utils/result';
 import Base from './base.model';
 
 const baseController = {
   getBase: async (req: Request, res: Response) => {
     try {
       const bases = await Base.find();
-      res.json({ msg: 'get success!', bases });
+      Result.success(res, { message: 'Get Success!', bases });
     } catch (error) {
-      return res.status(500).json({ msg: error });
+      return Result.error(res, { message: error });
     }
   },
 
@@ -16,11 +17,11 @@ const baseController = {
     try {
       const { baseName } = req.body;
       const ingredient = await Base.findOne({ baseName });
-      if (ingredient) return res.status(400).json({ msg: 'Base already exists!' });
+      if (ingredient) return Result.error(res, { message: 'Base already exists!' });
 
       const newBase = new Base(req.body);
       await newBase.save();
-      res.json({ msg: 'create success!' });
+      Result.success(res, { message: 'Create Success!' });
     } catch (error: any) {
       next(error);
     }
@@ -30,10 +31,10 @@ const baseController = {
     try {
       const base = await Base.findOneAndUpdate({ _id: req.params.id }, req.body);
 
-      if (!base) return res.status(400).json({ msg: 'Base does not exists!' });
-      res.json({ msg: 'Update Success!' });
+      if (!base) return Result.error(res, { message: 'Base does not exists!' });
+      Result.success(res, { message: 'Update Success!' });
     } catch (error: any) {
-      return res.status(500).json({ msg: error.message });
+      return Result.error(res, { message: error.message });
     }
   },
 
@@ -41,10 +42,10 @@ const baseController = {
     try {
       const base = await Base.findOneAndDelete({ _id: req.params.id });
 
-      if (!base) return res.status(400).json({ msg: 'Base does not exists!' });
-      res.json({ msg: 'Delete Success!' });
+      if (!base) return Result.error(res, { message: 'Base does not exists!' });
+      Result.success(res, { message: 'Delete Success!' });
     } catch (error: any) {
-      return res.status(500).json({ msg: error.message });
+      return Result.error(res, { message: error.message });
     }
   },
 };

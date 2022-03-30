@@ -1,13 +1,25 @@
 import { Request, Response } from 'express';
+import Result from '../../utils/result';
 import Nutritions from './nutrition.model';
 
 const nutritionController = {
+  // Get all nutrition
   getNutritions: async (req: Request, res: Response) => {
     try {
       const nutritions = await Nutritions.find();
-      res.json({ msg: 'get success!', nutritions });
+      Result.success(res, nutritions);
     } catch (error) {
-      return res.status(500).json({ msg: error });
+      return Result.error(res, { message: error });
+    }
+  },
+
+  // Get Nutrition active
+  getNutritionActive: async (req: Request, res: Response) => {
+    try {
+      const nutritionActive = await Nutritions.find({ active: true }).sort({ createdAt: 1 });
+      Result.success(res, nutritionActive);
+    } catch (error) {
+      Result.error(res, { message: error });
     }
   },
 
@@ -15,17 +27,17 @@ const nutritionController = {
     try {
       const { nutritionName } = req.body;
       const nutrition = await Nutritions.findOne({ nutritionName });
-      if (nutrition) return res.status(400).json({ msg: 'Nutrition already exists!' });
-
+      if (nutrition) return Result.error(res, { message: 'Nutrition already exists!' });
       const newNutrition = new Nutritions(req.body);
       await newNutrition.save();
-      res.json({ msg: 'create success!' });
+
+      Result.success(res, { message: 'create success!' });
     } catch (error: any) {
       let errMsg;
       if (error.code === 11000) {
         errMsg = Object.values(error.keyValue)[0] + ' already exits.';
       }
-      return res.status(500).json({ msg: errMsg });
+      Result.error(res, { message: errMsg });
     }
   },
 };

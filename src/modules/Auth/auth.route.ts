@@ -8,6 +8,6 @@ AuthRouter.route('/register').post(ValidRegister, authController.register);
 
 AuthRouter.route('/active').post(authController.activeAccount);
 
-AuthRouter.route('/login').post(authController.login);
+AuthRouter.route('/auth/login').post(authController.login);
 
 export default AuthRouter;

@@ -1,32 +1,32 @@
 import { Request, Response } from 'express';
+import Result from '../../utils/result';
 import Ingredients from './ingredient.model';
 
 const ingredientController = {
   getIngredient: async (req: Request, res: Response) => {
     try {
       const ingredients = await Ingredients.find();
-      res.json({ msg: 'get success!', ingredients });
+      Result.success(res, ingredients);
     } catch (error) {
-      return res.status(500).json({ msg: error });
+      return Result.error(res, { message: error });
     }
   },
 
   createIngredient: async (req: Request, res: Response) => {
     try {
-      const { ingredientName } = req.body;
-      console.log(req.body);
-      const ingredient = await Ingredients.findOne({ ingredientName });
-      if (ingredient) return res.status(400).json({ msg: 'Ingredient already exists!' });
+      console.log('Client send: ', req.body);
 
-      const newIngredient = new Ingredients(req.body);
-      await newIngredient.save();
-      res.json({ msg: 'create success!' });
+      const { ingredientName } = req.body;
+      console.log('ingredientName', ingredientName);
+
+      const ingredient = await Ingredients.findOne({ ingredientName });
+      if (ingredient) return Result.error(res, { message: 'Ingredient already exists!' });
+      const newIngredient = await Ingredients.create(req.body);
+      console.log('newIngredient', newIngredient);
+
+      Result.success(res, { message: 'Create success!' });
     } catch (error: any) {
-      let errMsg;
-      if (error.code === 11000) {
-        errMsg = Object.values(error.keyValue)[0] + ' already exits.';
-      }
-      return res.status(500).json({ msg: errMsg });
+      return Result.error(res, { message: Object.values(error.keyValue)[0] + ' already exits.' });
     }
   },
 
@@ -34,10 +34,10 @@ const ingredientController = {
     try {
       const ingredient = await Ingredients.findOneAndUpdate({ _id: req.params.id }, req.body);
 
-      if (!ingredient) return res.status(400).json({ msg: 'Ingredient does not exists!' });
-      res.json({ msg: 'Update Success!' });
-    } catch (error: any) {
-      return res.status(500).json({ msg: error.message });
+      if (!ingredient) return Result.error(res, { message: 'Ingredient does not exists!' });
+      Result.success(res, { message: 'Update Success!' });
+    } catch (error) {
+      return Result.error(res, { message: error });
     }
   },
 };
