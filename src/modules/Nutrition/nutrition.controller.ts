@@ -7,7 +7,7 @@ const nutritionController = {
   getNutritions: async (req: Request, res: Response) => {
     try {
       const nutritions = await Nutritions.find();
-      Result.success(res, nutritions);
+      Result.success(res, { data: nutritions });
     } catch (error) {
       return Result.error(res, { message: error });
     }
@@ -17,7 +17,7 @@ const nutritionController = {
   getNutritionActive: async (req: Request, res: Response) => {
     try {
       const nutritionActive = await Nutritions.find({ active: true }).sort({ createdAt: 1 });
-      Result.success(res, nutritionActive);
+      Result.success(res, { data: nutritionActive });
     } catch (error) {
       Result.error(res, { message: error });
     }
@@ -38,6 +38,20 @@ const nutritionController = {
         errMsg = Object.values(error.keyValue)[0] + ' already exits.';
       }
       Result.error(res, { message: errMsg });
+    }
+  },
+
+  updateNutrition: async (req: Request, res: Response) => {
+    try {
+      const array = req.body;
+
+      for (let i = 0; i < array.length; i++) {
+        await Nutritions.findByIdAndUpdate(array[i]._id, array[i]);
+      }
+
+      Result.success(res, { message: 'create success!' });
+    } catch (error: any) {
+      Result.error(res, { message: error });
     }
   },
 };

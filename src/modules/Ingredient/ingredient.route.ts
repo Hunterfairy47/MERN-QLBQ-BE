@@ -7,7 +7,9 @@ const IngredientRouter = express.Router();
 
 IngredientRouter.route('/ingredient')
   .get(ingredientController.getIngredient)
-  .post(auth, authorize('admin'), ingredientController.createIngredient);
-IngredientRouter.route('/ingredient/:id').patch(auth, authorize('admin'), ingredientController.updateIngredient);
+  .post(ingredientController.createIngredient);
+IngredientRouter.route('/ingredient/:id')
+  .patch(ingredientController.updateIngredient)
+  .delete(auth, authorize('admin'), ingredientController.deleteIngredient);
 
 export default IngredientRouter;
