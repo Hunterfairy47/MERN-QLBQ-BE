@@ -1,4 +1,7 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import path from 'path';
+import readXlsxFile from 'read-excel-file/node';
+import { Ingredient } from '../../config/interface';
 import Result from '../../utils/result';
 import Dish from '../Dish/dish.model';
 import Nutritions from '../Nutrition/nutrition.model';
@@ -41,81 +44,83 @@ const ingredientController = {
       let _value = Number(req.query._value);
       const nutritionName = await Nutritions.findOne({ nutritionName: nutrition });
 
-      if (_sign === 'equal') {
-        aggregate_options.push({
-          $match: {
-            nutritionDetail: {
-              $all: [
-                {
-                  $elemMatch: {
-                    nutritionId: nutritionName?._id,
-                    nutritionValue: { $eq: _value },
+      if (nutrition && _sign && _value) {
+        if (_sign === 'equal') {
+          aggregate_options.push({
+            $match: {
+              nutritionDetail: {
+                $all: [
+                  {
+                    $elemMatch: {
+                      nutritionId: nutritionName?._id,
+                      nutritionValue: { $eq: _value },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        });
-      } else if (_sign === 'less') {
-        aggregate_options.push({
-          $match: {
-            nutritionDetail: {
-              $all: [
-                {
-                  $elemMatch: {
-                    nutritionId: nutritionName?._id,
-                    nutritionValue: { $lt: _value },
+          });
+        } else if (_sign === 'less') {
+          aggregate_options.push({
+            $match: {
+              nutritionDetail: {
+                $all: [
+                  {
+                    $elemMatch: {
+                      nutritionId: nutritionName?._id,
+                      nutritionValue: { $lt: _value },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        });
-      } else if (_sign === 'lessThan') {
-        aggregate_options.push({
-          $match: {
-            nutritionDetail: {
-              $all: [
-                {
-                  $elemMatch: {
-                    nutritionId: nutritionName?._id,
-                    nutritionValue: { $lte: _value },
+          });
+        } else if (_sign === 'lessThan') {
+          aggregate_options.push({
+            $match: {
+              nutritionDetail: {
+                $all: [
+                  {
+                    $elemMatch: {
+                      nutritionId: nutritionName?._id,
+                      nutritionValue: { $lte: _value },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        });
-      } else if (_sign === 'more') {
-        aggregate_options.push({
-          $match: {
-            nutritionDetail: {
-              $all: [
-                {
-                  $elemMatch: {
-                    nutritionId: nutritionName?._id,
-                    nutritionValue: { $gt: _value },
+          });
+        } else if (_sign === 'more') {
+          aggregate_options.push({
+            $match: {
+              nutritionDetail: {
+                $all: [
+                  {
+                    $elemMatch: {
+                      nutritionId: nutritionName?._id,
+                      nutritionValue: { $gt: _value },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        });
-      } else if (_sign === 'greaterThan') {
-        aggregate_options.push({
-          $match: {
-            nutritionDetail: {
-              $all: [
-                {
-                  $elemMatch: {
-                    nutritionId: nutritionName?._id,
-                    nutritionValue: { $gte: _value },
+          });
+        } else if (_sign === 'greaterThan') {
+          aggregate_options.push({
+            $match: {
+              nutritionDetail: {
+                $all: [
+                  {
+                    $elemMatch: {
+                      nutritionId: nutritionName?._id,
+                      nutritionValue: { $gte: _value },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        });
+          });
+        }
       }
 
       //Set up the aggregation
@@ -174,6 +179,75 @@ const ingredientController = {
       Result.success(res, { message: 'Delete Success!' });
     } catch (error) {
       return Result.error(res, { message: error });
+    }
+  },
+
+  uploadIngredient: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (req.file === undefined) {
+        return Result.error(res, { message: 'Please up load an excel file!' });
+      }
+
+      let excelFile = path.resolve(__dirname, '../../resources/static/ingredients/uploads/' + req.file.filename);
+
+      readXlsxFile(excelFile).then(async (rows) => {
+        // skip header
+        rows.shift();
+        rows.shift();
+
+        //
+        const nutritions = await Nutritions.find();
+        let nutritionDetail: any = [];
+        rows.forEach((row) => {
+          let nutritionFromFile = {
+            Calo: row[3],
+            Béo: row[4],
+            Đường: row[5],
+            Đạm: row[6],
+          };
+
+          for (let [key, value] of Object.entries(nutritionFromFile)) {
+            nutritions.map((nutrition) => {
+              if (nutrition.nutritionName === key) {
+                key = nutrition._id;
+              }
+            });
+            const item = {
+              ingredient: row[1],
+              nutritionId: key,
+              nutritionValue: value,
+            };
+            console.log(item);
+
+            nutritionDetail.push(item);
+          }
+        });
+        let ingredients: Ingredient[] = [];
+        rows.forEach(async (row) => {
+          let nutritionArr: any = [];
+          nutritionDetail.map((item: any) => {
+            if (item.ingredient === row[1]) {
+              let itemArr = {
+                nutritionId: item.nutritionId,
+                nutritionValue: item.nutritionValue,
+              };
+              nutritionArr.push(itemArr);
+            }
+          });
+          let ingredient = new Ingredients({
+            ingredientName: row[1],
+            standardMass: row[2],
+            nutritionDetail: nutritionArr,
+          });
+          console.log('row', ingredient);
+          ingredients.push(ingredient);
+        });
+
+        const ingredientList = await Ingredients.create(ingredients);
+        Result.success(res, { message: 'Upload file successfully.', data: ingredientList });
+      });
+    } catch (error) {
+      return next(error);
     }
   },
 };

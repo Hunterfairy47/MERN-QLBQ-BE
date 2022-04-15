@@ -1,5 +1,5 @@
-import { Request } from "express";
-import { Document } from "mongoose";
+import { Request } from 'express';
+import { Document } from 'mongoose';
 export interface IUser extends Document {
   firstname: string;
   lastname: string;
@@ -34,16 +34,16 @@ export interface INutrition {
   active: boolean;
 }
 
-interface INewNutrition {
+interface NewNutrition {
   nutritionId: string;
   nutritionValue: number;
 }
 
-export interface IIngredient {
+export interface Ingredient {
   _id: string;
   ingredientName: string;
   standardMass: number;
-  nutritionDetail: INewNutrition[];
+  nutritionDetail: NewNutrition[];
 }
 
 export interface IBase {
@@ -61,7 +61,7 @@ export interface IDish {
   _id: string;
   dishName: string;
   englishName: string;
-  image: string;
+  imgUrl: string;
   ingredients: string[];
   typeDishId: string;
 }

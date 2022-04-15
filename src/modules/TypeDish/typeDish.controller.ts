@@ -5,8 +5,8 @@ import TypeDish from './typeDish.model';
 const typeDishController = {
   getTypeDish: async (req: Request, res: Response) => {
     try {
-      const typeDishs = await TypeDish.find();
-      Result.success(res, { message: 'Get success!', typeDishs });
+      const data = await TypeDish.find();
+      Result.success(res, { data });
     } catch (error) {
       return Result.error(res, { message: error });
     }

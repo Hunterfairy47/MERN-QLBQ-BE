@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IIngredient } from '../../config/interface';
+import { Ingredient } from '../../config/interface';
 
 const ingredientSchema = new mongoose.Schema(
   {
@@ -27,7 +27,7 @@ const ingredientSchema = new mongoose.Schema(
 
 ingredientSchema.index({ ingredientName: 'text' });
 
-const Ingredients = mongoose.model<IIngredient>('Ingredient', ingredientSchema);
+const Ingredients = mongoose.model<Ingredient>('Ingredient', ingredientSchema);
 
 Ingredients.createIndexes({ ingredientName: 'text' });
 
