@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 export interface IUser extends Document {
   firstname: string;
   lastname: string;
@@ -62,7 +62,6 @@ export interface IDish {
   dishName: string;
   englishName: string;
   imgUrl: string;
-  ingredients: string[];
   typeDishId: string;
 }
 
@@ -82,12 +81,15 @@ export interface IMenu {
   trainingId: string;
 }
 
+export interface IIngredientDish {
+  dishDetailId: mongoose.Types.ObjectId;
+  ingredientId: mongoose.Types.ObjectId;
+  realUnit: String;
+  realMass: String;
+}
 export interface IDishDetails {
-  menuDetailsId: string;
-  ingredientIds: string;
-  quantity: Number;
-  realUnit: string;
-  price: Number;
+  trainingLevelId: mongoose.Types.ObjectId;
+  dishId: mongoose.Types.ObjectId;
 }
 export interface IMenuDetails {
   dishId: string;

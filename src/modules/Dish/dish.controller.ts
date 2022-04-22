@@ -1,7 +1,11 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Request, Response } from 'express';
-import { IReqAuth } from '../../config/interface';
+import { IDishDetails, IIngredientDish, IReqAuth } from '../../config/interface';
 import Result from '../../utils/result';
+import DishDetail from '../DishDetail/dishDetail.model';
+import dishDetailService from '../DishDetail/dishDetail.service';
+import IngredientDish from '../IngredientDish/ingredientDish.model';
+import ingredientDishService from '../IngredientDish/ingredientDish.service';
 import TypeDish from '../TypeDish/typeDish.model';
 import Dish from './dish.model';
 const fs = require('fs');
@@ -92,14 +96,30 @@ const dishController = {
 
   createDish: async (req: IReqAuth, res: Response) => {
     try {
-      const { dishName } = req.body;
+      const { dishName, trainingLevelId, ingredients } = req.body;
       const dish = await Dish.findOne({ dishName });
       if (dish) return Result.error(res, { message: 'Dish already exists!' });
-      console.log(req.file);
 
-      const newDish = new Dish(req.body);
+      // Create new Dish
+      const newDish = await Dish.create(req.body);
 
-      await newDish.save();
+      // Create new DishDetail
+      const dishId = newDish._id;
+      const dataDishDetail = { trainingLevelId, dishId } as IDishDetails;
+      const dishDetail = await dishDetailService.create(dataDishDetail);
+
+      // Create Ingredient_Dish
+      const dishDetailId = dishDetail._id;
+      for (let i = 0; i < ingredients.length; i++) {
+        let realUnit = ingredients[i].realUnit;
+        let realMass = ingredients[i].realMass;
+        let ingredientId = ingredients[i].ingredientId;
+
+        const dataIngredientDish = { dishDetailId, realUnit, realMass, ingredientId } as IIngredientDish;
+        console.log(dataIngredientDish);
+
+        await ingredientDishService.create(dataIngredientDish);
+      }
 
       Result.success(res, { message: 'create success!' });
     } catch (error: any) {
@@ -109,6 +129,23 @@ const dishController = {
 
   deleteDish: async (req: Request, res: Response) => {
     try {
+      // Delete img on clound
+      const dishImg = await Dish.findOne({ _id: req.params.id });
+      const url = dishImg?.imgUrl;
+      const imgUrl = url?.substring(url?.lastIndexOf('/') + 1).split('.')[0] as string;
+      await cloudinary.uploader.destroy(imgUrl);
+      const dishDetailId = await DishDetail.findOne({ dishId: req.params.id });
+
+      // Delete IngredientDish
+      const dishDetail = await IngredientDish.find({ dishDetailId: dishDetailId?._id });
+      for (let i = 0; i < dishDetail.length; i++) {
+        await IngredientDish.findOneAndDelete({ _id: dishDetail[i]._id });
+      }
+
+      // Delete DishDetail
+      await DishDetail.findOneAndDelete({ dishId: req.params.id });
+
+      // Delete Dish
       const dish = await Dish.findOneAndDelete({ _id: req.params.id });
       if (!dish) return Result.error(res, { message: 'Dish does not exists!' });
       Result.success(res, { message: 'Delete Success!' });

@@ -15,7 +15,6 @@ const dishSchema = new mongoose.Schema(
       type: String,
       default: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlXIV_bKc97wHdmbvgu02kmp2i3sHx7ybqcQ&usqp=CAU',
     },
-    ingredients: [{ type: String, required: true, ref: 'Ingredient' }],
     typeDishId: { type: mongoose.Types.ObjectId, required: true, ref: 'TypeDish' },
   },
   {

@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { IReqAuth } from '../../config/interface';
 import Result from '../../utils/result';
-import DishDetails from '../Dish/dishDetail.model';
 import Menu from './menu.model';
 import MenuDetails from './menuDetail.model';
 const ObjectId = mongoose.Types.ObjectId;
@@ -43,26 +42,26 @@ const menuController = {
     }
   },
 
-  updateMenuDetailsById: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      let list = req.body;
-      let day = req.params.id;
-      const date = await MenuDetails.find({ date: day });
-      for (let i = 0; i < date.length; i++) {
-        for (let j = 0; j < list.data.length; j++) {
-          if (list.data[j].dishId === date[i].dishId && day === '2020-03-22T17:00:00.000+00:00') {
-            await DishDetails.create({
-              menuDetailsId: date[i]._id,
-              ...list.data[i],
-            });
-          }
-        }
-      }
-      Result.success(res, { message: 'Post success!' });
-    } catch (error) {
-      next(error);
-    }
-  },
+  // updateMenuDetailsById: async (req: Request, res: Response, next: NextFunction) => {
+  //   try {
+  //     let list = req.body;
+  //     let day = req.params.id;
+  //     const date = await MenuDetails.find({ date: day });
+  //     for (let i = 0; i < date.length; i++) {
+  //       for (let j = 0; j < list.data.length; j++) {
+  //         if (list.data[j].dishId === date[i].dishId && day === '2020-03-22T17:00:00.000+00:00') {
+  //           await DishDetails.create({
+  //             menuDetailsId: date[i]._id,
+  //             ...list.data[i],
+  //           });
+  //         }
+  //       }
+  //     }
+  //     Result.success(res, { message: 'Post success!' });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // },
 
   createMenu: async (req: IReqAuth, res: Response, next: NextFunction) => {
     try {
