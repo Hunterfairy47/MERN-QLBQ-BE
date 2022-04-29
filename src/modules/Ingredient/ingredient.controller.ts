@@ -132,6 +132,13 @@ const ingredientController = {
     }
   },
 
+  getAll: async (req: Request, res: Response) => {
+    try {
+      const data = await Ingredients.find();
+      Result.success(res, { data });
+    } catch (error) {}
+  },
+
   createIngredient: async (req: Request, res: Response) => {
     try {
       const { ingredientName } = req.body;

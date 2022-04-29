@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { IDishDetails, IIngredientDish, IReqAuth } from '../../config/interface';
 import Result from '../../utils/result';
 import DishDetail from '../DishDetail/dishDetail.model';
@@ -75,6 +76,153 @@ const dishController = {
     }
   },
 
+  getOne: async (req: Request, res: Response) => {
+    try {
+      const data = await Dish.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(req.params.id),
+          },
+        },
+
+        // Find type Dish
+        {
+          $lookup: {
+            from: 'typedishes',
+            localField: 'typeDishId',
+            foreignField: '_id',
+            as: 'typeDishes',
+          },
+        },
+        {
+          $unwind: '$typeDishes',
+        },
+
+        // Find training level
+        {
+          $lookup: {
+            from: 'dishdetails',
+            localField: '_id',
+            foreignField: 'dishId',
+            as: 'dishdetail',
+          },
+        },
+        {
+          $unwind: '$dishdetail',
+        },
+
+        {
+          $lookup: {
+            from: 'trainings',
+            localField: 'dishdetail.trainingLevelId',
+            foreignField: '_id',
+            as: 'trainingLevel',
+          },
+        },
+        {
+          $unwind: '$trainingLevel',
+        },
+
+        {
+          $lookup: {
+            from: 'ingredientdishes',
+            localField: 'dishdetail._id',
+            foreignField: 'dishDetailId',
+            as: 'ingredients',
+          },
+        },
+        {
+          $unwind: '$ingredients',
+        },
+
+        {
+          $lookup: {
+            from: 'ingredients',
+            localField: 'ingredients.ingredientId',
+            foreignField: '_id',
+            as: 'ingredients.ingredient',
+          },
+        },
+        {
+          $unwind: '$ingredients.ingredient',
+        },
+
+        {
+          $group: {
+            _id: '$_id',
+            imgUrl: { $first: '$imgUrl' },
+            dishName: { $first: '$dishName' },
+            englishName: { $first: '$englishName' },
+            typeDishes: { $first: '$typeDishes' },
+            trainingLevel: { $first: '$trainingLevel' },
+            ingredients: {
+              $push: {
+                _id: '$ingredients.ingredientId',
+                realUnit: '$ingredients.realUnit',
+                realMass: '$ingredients.realMass',
+                standardMass: '$ingredients.ingredient.standardMass',
+                ingredientName: '$ingredients.ingredient.ingredientName',
+                nutritionDetail: '$ingredients.ingredient.nutritionDetail',
+              },
+            },
+          },
+        },
+        // {
+        //   $project: {
+        //     typeDishes: 1,
+        //   },
+        // },
+      ]);
+      Result.success(res, { data: data[0] });
+    } catch (error) {}
+  },
+
+  getAllIngredientDish: async (req: Request, res: Response) => {
+    try {
+      const dishDetail = await DishDetail.findOne({
+        dishId: req.body.dishId,
+        trainningLevelId: req.body.trainningLevelId,
+      });
+      if (dishDetail === null) return;
+      const dishDetailId = dishDetail._id;
+      const data = await IngredientDish.aggregate([
+        {
+          $match: {
+            dishDetailId: mongoose.Types.ObjectId(dishDetailId),
+          },
+        },
+        {
+          $lookup: {
+            from: 'ingredients',
+            localField: 'ingredientId',
+            foreignField: '_id',
+            as: 'ingredient',
+          },
+        },
+        {
+          $unwind: '$ingredient',
+        },
+        {
+          $addFields: {
+            ingredientName: '$ingredient.ingredientName',
+            nutritionDetail: '$ingredient.nutritionDetail',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            realUnit: 1,
+            realMass: 1,
+            ingredientId: 1,
+            ingredientName: 1,
+            nutritionDetail: 1,
+          },
+        },
+      ]);
+      Result.success(res, { data });
+    } catch (error) {}
+  },
+
   uploadImage: async (req: Request, res: Response) => {
     try {
       if (!req.file) {
@@ -96,6 +244,8 @@ const dishController = {
 
   createDish: async (req: IReqAuth, res: Response) => {
     try {
+      console.log(req.body);
+
       const { dishName, trainingLevelId, ingredients } = req.body;
       const dish = await Dish.findOne({ dishName });
       if (dish) return Result.error(res, { message: 'Dish already exists!' });
@@ -116,7 +266,6 @@ const dishController = {
         let ingredientId = ingredients[i].ingredientId;
 
         const dataIngredientDish = { dishDetailId, realUnit, realMass, ingredientId } as IIngredientDish;
-        console.log(dataIngredientDish);
 
         await ingredientDishService.create(dataIngredientDish);
       }
@@ -125,6 +274,54 @@ const dishController = {
     } catch (error: any) {
       return Result.error(res, { message: error });
     }
+  },
+
+  updateIngredientDish: async (req: Request, res: Response) => {
+    try {
+      const ingredientChangeId = mongoose.Types.ObjectId(req.body.ingredientChange);
+      const dishDetail = await DishDetail.findOne({ dishId: req.body.dishId });
+      if (dishDetail === null) return;
+      const dishDetailId = dishDetail._id;
+      const ingredientChange = await IngredientDish.findOneAndUpdate(
+        { dishDetailId, ingredientId: req.body.ingredientChanged },
+        { $set: { ingredientId: ingredientChangeId } }
+      );
+      const data = await IngredientDish.aggregate([
+        {
+          $match: {
+            dishDetailId: mongoose.Types.ObjectId(dishDetailId),
+          },
+        },
+        {
+          $lookup: {
+            from: 'ingredients',
+            localField: 'ingredientId',
+            foreignField: '_id',
+            as: 'ingredient',
+          },
+        },
+        {
+          $unwind: '$ingredient',
+        },
+        {
+          $addFields: {
+            ingredientName: '$ingredient.ingredientName',
+            nutritionDetail: '$ingredient.nutritionDetail',
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            realUnit: 1,
+            realMass: 1,
+            ingredientId: 1,
+            ingredientName: 1,
+            nutritionDetail: 1,
+          },
+        },
+      ]);
+      Result.success(res, { data });
+    } catch (error) {}
   },
 
   deleteDish: async (req: Request, res: Response) => {

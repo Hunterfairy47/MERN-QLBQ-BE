@@ -6,6 +6,8 @@ const DishRouter = express.Router();
 
 DishRouter.route('/dish').get(dishController.getDish).post(uploadImage, dishController.createDish);
 DishRouter.route('/upload').post(uploadImage, dishController.uploadImage);
-DishRouter.route('/dish/:id').patch(dishController.deleteDish).delete(dishController.deleteDish);
+DishRouter.route('/dish/change/:id').patch(dishController.updateIngredientDish);
+DishRouter.route('/dish/getall').post(dishController.getAllIngredientDish);
+DishRouter.route('/dish/:id').get(dishController.getOne).delete(dishController.deleteDish);
 
 export default DishRouter;

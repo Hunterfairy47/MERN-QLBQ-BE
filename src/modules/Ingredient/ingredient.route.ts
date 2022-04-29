@@ -15,4 +15,6 @@ IngredientRouter.route('/ingredient/:id')
 
 IngredientRouter.route('/ingredient/upload').post(uploadFile, ingredientController.uploadIngredient);
 
+IngredientRouter.route('/ingredient/getall').get(ingredientController.getAll);
+
 export default IngredientRouter;
