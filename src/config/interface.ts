@@ -85,9 +85,10 @@ export interface IIngredientDish {
   dishDetailId: mongoose.Types.ObjectId;
   ingredientId: mongoose.Types.ObjectId;
   realUnit: String;
-  realMass: String;
+  realMass: number;
 }
 export interface IDishDetails {
+  _id?: mongoose.Types.ObjectId;
   trainingLevelId: mongoose.Types.ObjectId;
   dishId: mongoose.Types.ObjectId;
 }

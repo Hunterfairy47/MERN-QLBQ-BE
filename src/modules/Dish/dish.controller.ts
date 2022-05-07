@@ -1,12 +1,16 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { IDishDetails, IIngredientDish, IReqAuth } from '../../config/interface';
+import path from 'path';
+import readXlsxFile from 'read-excel-file/node';
+import { IDish, IDishDetails, IIngredientDish, IReqAuth } from '../../config/interface';
 import Result from '../../utils/result';
 import DishDetail from '../DishDetail/dishDetail.model';
 import dishDetailService from '../DishDetail/dishDetail.service';
+import Ingredients from '../Ingredient/ingredient.model';
 import IngredientDish from '../IngredientDish/ingredientDish.model';
 import ingredientDishService from '../IngredientDish/ingredientDish.service';
+import Training from '../Training/training.model';
 import TypeDish from '../TypeDish/typeDish.model';
 import Dish from './dish.model';
 const fs = require('fs');
@@ -29,6 +33,32 @@ const dishController = {
         },
         {
           $unwind: '$typeDishes',
+        }
+      );
+
+      aggregate_options.push(
+        {
+          $lookup: {
+            from: 'dishdetails',
+            localField: '_id',
+            foreignField: 'dishId',
+            as: 'dishdetail',
+          },
+        },
+        {
+          $unwind: '$dishdetail',
+        },
+
+        {
+          $lookup: {
+            from: 'trainings',
+            localField: 'dishdetail.trainingLevelId',
+            foreignField: '_id',
+            as: 'trainingLevel',
+          },
+        },
+        {
+          $unwind: '$trainingLevel',
         }
       );
 
@@ -57,6 +87,17 @@ const dishController = {
         aggregate_options.push({
           $match: {
             typeDishId: typeDish._id,
+          },
+        });
+      }
+
+      // Sort dish by training level
+      let training = String(req.query._training);
+      const trainingLevel = await Training.findOne({ trainingName: training });
+      if (trainingLevel) {
+        aggregate_options.push({
+          $match: {
+            'trainingLevel._id': trainingLevel._id,
           },
         });
       }
@@ -324,6 +365,17 @@ const dishController = {
     } catch (error) {}
   },
 
+  updateDish: async (req: Request, res: Response) => {
+    try {
+      const dish = await Dish.findOneAndUpdate({ _id: req.params.id }, req.body);
+
+      if (!dish) return Result.error(res, { message: 'Dish does not exists!' });
+      Result.success(res, { message: 'Update Success!' });
+    } catch (error) {
+      return Result.error(res, { message: error });
+    }
+  },
+
   deleteDish: async (req: Request, res: Response) => {
     try {
       // Delete img on clound
@@ -346,6 +398,107 @@ const dishController = {
       const dish = await Dish.findOneAndDelete({ _id: req.params.id });
       if (!dish) return Result.error(res, { message: 'Dish does not exists!' });
       Result.success(res, { message: 'Delete Success!' });
+    } catch (error) {
+      return Result.error(res, { message: error });
+    }
+  },
+  uploadDish: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Check choosen file
+      if (req.file === undefined) {
+        return Result.error(res, { message: 'Please up load an excel file!' });
+      }
+
+      let excelFile = path.resolve(__dirname, '../../resources/static/ingredients/uploads/' + req.file.filename);
+
+      readXlsxFile(excelFile).then(async (rows) => {
+        // skip header
+        rows.shift();
+        rows.shift();
+        rows.shift();
+
+        let dishInValid: IDish[] = [];
+        const typeDishCheck = await TypeDish.find();
+
+        rows.forEach(async (row, i) => {
+          let typeDishName = String(row[3]);
+          let typeDishId = '';
+          for (let i = 0; i < typeDishCheck.length; i++) {
+            if (typeDishName === typeDishCheck[i].typeDishName) {
+              typeDishId = typeDishCheck[i]._id;
+            }
+          }
+          let dish = new Dish({
+            dishName: row[1],
+            englishName: row[2],
+            typeDishId,
+          });
+          // Check exits dish
+          let checkDishExist = await Dish.findOne({ dishName: dish.dishName });
+          let newDish: IDish = {
+            _id: '',
+            dishName: '',
+            englishName: '',
+            imgUrl: '',
+            typeDishId: '',
+          };
+          if (checkDishExist) {
+            dishInValid.push(dish);
+          } else {
+            // Create new Dish
+            newDish = await Dish.create(dish);
+          }
+
+          // Create DishDetail by newDish
+          let dishId = newDish._id.toString();
+          const trainingName = row[4].toString();
+          const training = await Training.findOne({ trainingName });
+          let trainingLevelId = '';
+          if (training) {
+            trainingLevelId = training._id.toString();
+          }
+          const dataDishDetail = { trainingLevelId, dishId } as IDishDetails;
+          const dishDetail = await dishDetailService.create(dataDishDetail);
+
+          // Create Ingredient of Dish by dishDetail
+          let dishDetailId = dishDetail._id.toString();
+          let ingredientNameArr = row[5].toString().split(',');
+          let realUnits = row[6].toString().split(',');
+          let realMasses = row[7].toString().split(',');
+
+          for (let index = 0; index < ingredientNameArr.length; index++) {
+            let ingredientId = '';
+            let realUnit = '';
+            let realMass = 0;
+            const ingredientName = await Ingredients.findOne({ ingredientName: ingredientNameArr[index].trim() });
+
+            if (ingredientName) {
+              ingredientId = ingredientName._id;
+            }
+
+            for (let k = 0; k < realUnits.length; k++) {
+              if (index === k) {
+                realUnit = realUnits[k].trim();
+              }
+            }
+
+            for (let l = 0; l < realMasses.length; l++) {
+              if (index === l) {
+                realMass = Number(realMasses[l].trim());
+              }
+            }
+            let ingredientObj: IIngredientDish = {
+              dishDetailId,
+              ingredientId,
+              realUnit,
+              realMass,
+            };
+            await ingredientDishService.create(ingredientObj);
+          }
+        });
+      });
+
+      Result.success(res, { message: 'Upload successfully!' });
     } catch (error) {
       return Result.error(res, { message: error });
     }

@@ -13,7 +13,7 @@ const dishSchema = new mongoose.Schema(
     },
     imgUrl: {
       type: String,
-      default: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlXIV_bKc97wHdmbvgu02kmp2i3sHx7ybqcQ&usqp=CAU',
+      default: 'https://img.freepik.com/vector-gratis/dibujado-mano-ilustracion-ceviche_23-2148793215.jpg',
     },
     typeDishId: { type: mongoose.Types.ObjectId, required: true, ref: 'TypeDish' },
   },

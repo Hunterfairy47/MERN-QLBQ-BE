@@ -6,8 +6,8 @@ import Training from './training.model';
 const trainingController = {
   getTraining: async (req: Request, res: Response) => {
     try {
-      const trainings = await Training.find();
-      Result.success(res, { message: 'get success!', trainings });
+      const data = await Training.find();
+      Result.success(res, { data });
     } catch (error) {
       return Result.error(res, { message: error });
     }
