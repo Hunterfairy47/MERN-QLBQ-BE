@@ -215,8 +215,18 @@ const dishController = {
         // },
       ]);
       Result.success(res, { data: data[0] });
-    } catch (error) {}
+    } catch (error) {
+      return Result.error(res, { message: error });
+    }
   },
+
+  // getDishByType: async (req: Request, res: Response) => {
+  //   try {
+  //     const
+  //   } catch (error) {
+  //     return Result.error(res, { message: error });
+  //   }
+  // },
 
   getAllIngredientDish: async (req: Request, res: Response) => {
     try {
@@ -261,7 +271,9 @@ const dishController = {
         },
       ]);
       Result.success(res, { data });
-    } catch (error) {}
+    } catch (error) {
+      return Result.error(res, { message: error });
+    }
   },
 
   uploadImage: async (req: Request, res: Response) => {

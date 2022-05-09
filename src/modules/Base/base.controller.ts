@@ -6,8 +6,8 @@ import Base from './base.model';
 const baseController = {
   getBase: async (req: Request, res: Response) => {
     try {
-      const bases = await Base.find();
-      Result.success(res, { message: 'Get Success!', bases });
+      const data = await Base.find();
+      Result.success(res, { data });
     } catch (error) {
       return Result.error(res, { message: error });
     }

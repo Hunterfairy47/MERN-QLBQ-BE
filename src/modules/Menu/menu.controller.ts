@@ -63,15 +63,95 @@ const menuController = {
   //   }
   // },
 
+  getOne: async (req: Request, res: Response) => {
+    try {
+      const data = await Menu.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(req.params.id),
+          },
+        },
+
+        // // Find type training
+        // {
+        //   $lookup: {
+        //     from: 'trainings',
+        //     localField: 'trainingLevelId',
+        //     foreignField: '_id',
+        //     as: 'trainingLevel',
+        //   },
+        // },
+        // {
+        //   $unwind: '$trainingLevel',
+        // },
+        // // Find type Dish by TrainingLevel
+        // {
+        //   $lookup: {
+        //     from: 'dishdetails',
+        //     localField: 'trainingLevelId',
+        //     foreignField: 'trainingLevelId',
+        //     as: 'dishDetail',
+        //   },
+        // },
+        // {
+        //   $unwind: '$dishDetail',
+        // },
+
+        // {
+        //   $lookup: {
+        //     from: 'dishes',
+        //     localField: 'dishDetail.dishId',
+        //     foreignField: '_id',
+        //     as: 'dishes',
+        //   },
+        // },
+        // {
+        //   $unwind: '$dishes',
+        // },
+        // {
+        //   $lookup: {
+        //     from: 'typedishes',
+        //     localField: 'dishes.typeDishId',
+
+        //     foreignField: '624e6bf1368389195c6dee2b',
+        //     as: 'typedish',
+        //   },
+        // },
+        // {
+        //   $unwind: '$typedish',
+        // },
+
+        // {
+        //   $group: {
+        //     _id: '$_id',
+        //     startDate: { $first: '$startDate' },
+        //     endDate: { $first: '$endDate' },
+        //     menuName: { $first: '$menuName' },
+
+        //     dishes: {
+        //       $push: {
+        //         _id: '$dishes._id',
+        //         dishName: '$dishes.dishName',
+        //       },
+        //     },
+        //   },
+        // },
+      ]);
+
+      Result.success(res, { data: data[0] });
+    } catch (error) {}
+  },
+
   createMenu: async (req: IReqAuth, res: Response, next: NextFunction) => {
     try {
-      const { _id } = req.body;
-      const menus = await Menu.findOne({ _id });
+      const { menuName } = req.body;
+      console.log(req.body);
+
+      const menus = await Menu.findOne({ menuName });
       if (menus) return Result.error(res, { message: 'Menu already exists!' });
       const newMenu = new Menu(req.body);
-      await newMenu.save();
-
-      Result.success(res, { message: 'Create success!' });
+      const data = await newMenu.save();
+      Result.success(res, { data, message: 'Create success!' });
     } catch (error: any) {
       next(error);
     }

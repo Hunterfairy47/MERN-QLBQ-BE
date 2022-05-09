@@ -3,16 +3,20 @@ import { IMenu } from '../../config/interface';
 
 const menuSchema = new mongoose.Schema(
   {
-    startDay: {
+    startDate: {
       type: Date,
       required: [true, 'Please add start day'],
     },
-    endDay: {
+    endDate: {
       type: Date,
       required: [true, 'Please add end day'],
     },
-    baseId: { type: String, required: true, ref: 'Base' },
-    trainingId: { type: String, required: true, ref: 'Training' },
+    menuName: {
+      type: String,
+      required: [true, 'Please add menu name'],
+    },
+    baseId: { type: mongoose.Types.ObjectId, required: true, ref: 'Base' },
+    trainingLevelId: { type: mongoose.Types.ObjectId, required: true, ref: 'Training' },
   },
   {
     autoIndex: true,

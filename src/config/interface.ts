@@ -75,10 +75,11 @@ export interface ITrainingLevel {
 }
 
 export interface IMenu {
-  startDay: Date;
-  endDay: Date;
-  baseId: string;
-  trainingId: string;
+  startDate: Date;
+  endDate: Date;
+  baseId: mongoose.Types.ObjectId;
+  trainingLevelId: mongoose.Types.ObjectId;
+  menuName: string;
 }
 
 export interface IIngredientDish {
