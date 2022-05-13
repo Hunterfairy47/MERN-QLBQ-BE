@@ -1,42 +1,171 @@
 import { NextFunction, Request, Response } from 'express';
+import moment from 'moment';
 import mongoose from 'mongoose';
 import { IReqAuth } from '../../config/interface';
 import Result from '../../utils/result';
+import MenuDetail from '../MenuDetail/menuDetail.model';
+import menuDetailService from '../MenuDetail/menuDetail.service';
 import Menu from './menu.model';
-import MenuDetails from './menuDetail.model';
 const ObjectId = mongoose.Types.ObjectId;
 
 const menuController = {
-  getMenuDetailsById: async (req: Request, res: Response, next: NextFunction) => {
+  getAll: async (req: Request, res: Response) => {
     try {
-      const menuDetail = await MenuDetails.aggregate([
+      let aggregate_options = [];
+      let search = !!req.query._q;
+      let match_regex = { $regex: req.query._q, $options: 'i' };
+      aggregate_options.push(
         {
-          $match: {
-            date: new Date('2020-03-22T17:00:00.000+00:00'),
+          $lookup: {
+            from: 'trainings',
+            localField: 'trainingLevelId',
+            foreignField: '_id',
+            as: 'trainingLevel',
           },
         },
+        {
+          $unwind: '$trainingLevel',
+        }
+      );
+
+      // Pagination
+      let _page = req.query._page ? +req.query._page : 1;
+      let _limit = req.query._limit ? +req.query._limit : 10;
+      let _totalRows = await Menu.countDocuments();
+      aggregate_options.push({ $skip: (_page - 1) * _limit }, { $limit: _limit });
+
+      //Set up the aggregation
+      let data = await Menu.aggregate(aggregate_options);
+
+      Result.success(res, { data, pagination: { _page, _limit, _totalRows } });
+    } catch (error) {}
+  },
+
+  getMenuDetailDate: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const date = moment(new Date(req.params.date)).format('DD/MM/YYYY');
+      const data = await MenuDetail.aggregate([
+        {
+          $match: { date },
+        },
+
         {
           $lookup: {
             from: 'dishes',
             localField: 'dishId',
             foreignField: '_id',
-            as: 'dishes',
+            as: 'dish',
           },
         },
+
         {
-          $unwind: '$dishes',
+          $unwind: '$dish',
         },
+
         {
           $lookup: {
-            from: 'ingredients',
-            localField: 'dishes.ingredients',
+            from: 'dishdetails',
+            localField: 'dish._id',
+            foreignField: 'dishId',
+            as: 'dishDetail',
+          },
+        },
+
+        {
+          $unwind: '$dishDetail',
+        },
+
+        // {
+        //   $lookup: {
+        //     from: 'ingredientdishes',
+        //     localField: 'dishDetail._id',
+        //     foreignField: 'dishDetailId',
+        //     as: 'ingredientdish',
+        //   },
+        // },
+
+        // {
+        //   $unwind: '$ingredientdish',
+        // },
+
+        // {
+        //   $lookup: {
+        //     from: 'ingredients',
+        //     localField: 'ingredientdish.ingredientId',
+        //     foreignField: '_id',
+        //     as: 'ingredient',
+        //   },
+        // },
+
+        // {
+        //   $unwind: '$ingredient',
+        // },
+
+        {
+          $lookup: {
+            from: 'typedishes',
+            localField: 'dish.typeDishId',
             foreignField: '_id',
-            as: 'dishes.ingredients',
+            as: 'typeDish',
+          },
+        },
+
+        {
+          $unwind: '$typeDish',
+        },
+
+        {
+          $lookup: {
+            from: 'menus',
+            localField: 'menuId',
+            foreignField: '_id',
+            as: 'menu',
+          },
+        },
+
+        {
+          $unwind: '$menu',
+        },
+
+        {
+          $lookup: {
+            from: 'trainings',
+            localField: 'menu.trainingLevelId',
+            foreignField: '_id',
+            as: 'trainingLevel',
+          },
+        },
+
+        {
+          $unwind: '$trainingLevel',
+        },
+
+        {
+          $group: {
+            _id: null,
+            menuId: { $first: '$menuId' },
+            date: { $first: '$date' },
+            trainingLevelName: { $first: '$trainingLevel.trainingName' },
+            menuDetail: {
+              $push: {
+                _id: '$dish._id',
+                dishName: '$dish.dishName',
+                typeDishName: '$typeDish.typeDishName',
+              },
+            },
+            // ingredients: {
+            //   $push: {
+            //     _id: '$ingredient._id',
+            //     ingredientName: '$ingredient.ingredientName',
+            //     realUnit: '$ingredientdish.realUnit',
+            //     realMass: '$ingredientdish.realMass',
+            //   },
+            // },
           },
         },
       ]);
 
-      Result.success(res, { message: 'Get success!', menuDetail });
+      Result.success(res, { data: data[0] });
     } catch (error) {
       next(error);
     }
@@ -71,71 +200,60 @@ const menuController = {
             _id: mongoose.Types.ObjectId(req.params.id),
           },
         },
+        {
+          $lookup: {
+            from: 'trainings',
+            localField: 'trainingLevelId',
+            foreignField: '_id',
+            as: 'trainingLevel',
+          },
+        },
+        {
+          $unwind: '$trainingLevel',
+        },
 
-        // // Find type training
-        // {
-        //   $lookup: {
-        //     from: 'trainings',
-        //     localField: 'trainingLevelId',
-        //     foreignField: '_id',
-        //     as: 'trainingLevel',
-        //   },
-        // },
-        // {
-        //   $unwind: '$trainingLevel',
-        // },
-        // // Find type Dish by TrainingLevel
-        // {
-        //   $lookup: {
-        //     from: 'dishdetails',
-        //     localField: 'trainingLevelId',
-        //     foreignField: 'trainingLevelId',
-        //     as: 'dishDetail',
-        //   },
-        // },
-        // {
-        //   $unwind: '$dishDetail',
-        // },
+        {
+          $lookup: {
+            from: 'menudetails',
+            localField: '_id',
+            foreignField: 'menuId',
+            as: 'menuDetails',
+          },
+        },
+        {
+          $unwind: '$menuDetails',
+        },
 
-        // {
-        //   $lookup: {
-        //     from: 'dishes',
-        //     localField: 'dishDetail.dishId',
-        //     foreignField: '_id',
-        //     as: 'dishes',
-        //   },
-        // },
-        // {
-        //   $unwind: '$dishes',
-        // },
-        // {
-        //   $lookup: {
-        //     from: 'typedishes',
-        //     localField: 'dishes.typeDishId',
+        {
+          $lookup: {
+            from: 'dishes',
+            localField: 'menuDetails.dishId',
+            foreignField: '_id',
+            as: 'menuDetails.dish',
+          },
+        },
+        {
+          $unwind: '$menuDetails.dish',
+        },
 
-        //     foreignField: '624e6bf1368389195c6dee2b',
-        //     as: 'typedish',
-        //   },
-        // },
-        // {
-        //   $unwind: '$typedish',
-        // },
-
-        // {
-        //   $group: {
-        //     _id: '$_id',
-        //     startDate: { $first: '$startDate' },
-        //     endDate: { $first: '$endDate' },
-        //     menuName: { $first: '$menuName' },
-
-        //     dishes: {
-        //       $push: {
-        //         _id: '$dishes._id',
-        //         dishName: '$dishes.dishName',
-        //       },
-        //     },
-        //   },
-        // },
+        {
+          $group: {
+            _id: null,
+            menuId: { $first: '$_id' },
+            startDate: { $first: '$startDate' },
+            endDate: { $first: '$endDate' },
+            trainingLevelName: { $first: '$trainingLevel.trainingName' },
+            menuDetail: {
+              $push: {
+                date: '$menuDetails.date',
+                dishes: {
+                  _id: '$menuDetails.dish._id',
+                  dishName: '$menuDetails.dish.dishName',
+                },
+              },
+            },
+          },
+        },
       ]);
 
       Result.success(res, { data: data[0] });
@@ -145,8 +263,6 @@ const menuController = {
   createMenu: async (req: IReqAuth, res: Response, next: NextFunction) => {
     try {
       const { menuName } = req.body;
-      console.log(req.body);
-
       const menus = await Menu.findOne({ menuName });
       if (menus) return Result.error(res, { message: 'Menu already exists!' });
       const newMenu = new Menu(req.body);
@@ -157,16 +273,13 @@ const menuController = {
     }
   },
 
-  createMenuDetails: async (req: Request, res: Response, next: NextFunction) => {
+  createMenuDetail: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let data = req.body.data;
-      let menuId = req.body.menuId;
-      for (let i = 0; i < data.length; i++) {
-        const newMenuDetails = new MenuDetails({ ...data[i], menuId });
-        await newMenuDetails.save();
-      }
+      const data = await menuDetailService.createMenuDetail(req.body);
 
-      Result.success(res, { message: 'Create success!' });
+      console.log(data);
+
+      Result.success(res, { data });
     } catch (error: any) {
       next(error);
     }

@@ -94,7 +94,16 @@ export interface IDishDetails {
   dishId: mongoose.Types.ObjectId;
 }
 export interface IMenuDetails {
-  dishId: string;
+  dishId: mongoose.Types.ObjectId;
+  menuId: mongoose.Types.ObjectId;
+  date: string;
+}
+
+export interface DishMenuDetail {
+  dish: IDish[];
+  date: string;
+}
+export interface IMenuDetailProps {
   menuId: string;
-  date: Date;
+  menuDetail: DishMenuDetail[];
 }
