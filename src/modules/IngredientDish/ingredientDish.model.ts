@@ -7,6 +7,7 @@ const ingredientDishSchema = new mongoose.Schema(
     ingredientId: { type: mongoose.Types.ObjectId, required: true, ref: 'Ingredient' },
     realUnit: { type: String, required: true },
     realMass: { type: Number, required: true },
+    price: { type: Number, default: 0 },
   },
   {
     timestamps: true,

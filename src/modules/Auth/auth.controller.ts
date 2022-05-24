@@ -14,7 +14,6 @@ const authController = {
   register: async (req: Request, res: Response) => {
     try {
       const { firstname, lastname, phone, office, email, password } = req.body;
-      
 
       const user = await Users.findOne({ email });
       if (user) return Result.error(res, { message: 'Email already exists!' }, 401);
@@ -29,7 +28,7 @@ const authController = {
         email,
         password: passwordHash,
       };
-      
+
       const active_token = generateActiveToken({ newUser });
       const user1 = new Users(newUser);
       await user1.save();

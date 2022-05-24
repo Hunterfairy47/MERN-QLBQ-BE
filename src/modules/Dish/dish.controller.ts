@@ -232,10 +232,12 @@ const dishController = {
     try {
       const dishDetail = await DishDetail.findOne({
         dishId: req.body.dishId,
-        trainningLevelId: req.body.trainningLevelId,
+        trainingLevelId: req.body.trainingLevelId,
       });
+
       if (dishDetail === null) return;
       const dishDetailId = dishDetail._id;
+
       const data = await IngredientDish.aggregate([
         {
           $match: {
@@ -259,9 +261,10 @@ const dishController = {
             nutritionDetail: '$ingredient.nutritionDetail',
           },
         },
+
         {
           $project: {
-            _id: 1,
+            _id: 0,
             realUnit: 1,
             realMass: 1,
             ingredientId: 1,
