@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { IUser } from '../config/interface';
+import { INewUser } from '../config/interface';
 
 export const generateActiveToken = (payload: object) => {
   return jwt.sign(payload, `${process.env.ACTIVE_TOKEN_SECRET}`, {
@@ -7,7 +7,7 @@ export const generateActiveToken = (payload: object) => {
   });
 };
 
-export const generateAccessToken = (payload: IUser) => {
+export const generateAccessToken = (payload: INewUser) => {
   return jwt.sign({ id: payload._id }, `${process.env.ACCESS_TOKEN_SECRET}`, {
     expiresIn: '30d',
   });

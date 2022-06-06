@@ -1,8 +1,9 @@
 import { Request } from 'express';
 import mongoose, { Document } from 'mongoose';
+
 export interface IUser extends Document {
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   office: string;
   email: string;
@@ -12,13 +13,11 @@ export interface IUser extends Document {
   _doc: object;
 }
 
-export interface INewUser {
-  firstname: string;
-  lastname: string;
-  phone: string;
-  office: string;
+export interface INewUser extends Document {
   email: string;
   password: string;
+  role?: string;
+  _doc: object;
 }
 
 export interface IDecodedToken {
@@ -66,7 +65,7 @@ export interface IDish {
 }
 
 export interface IReqAuth extends Request {
-  user?: IUser;
+  user?: INewUser;
 }
 
 export interface ITrainingLevel {

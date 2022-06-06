@@ -4,11 +4,11 @@ import { IMenu } from '../../config/interface';
 const menuSchema = new mongoose.Schema(
   {
     startDate: {
-      type: Date,
+      type: String,
       required: [true, 'Please add start day'],
     },
     endDate: {
-      type: Date,
+      type: String,
       required: [true, 'Please add end day'],
     },
     menuName: {

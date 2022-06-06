@@ -7,14 +7,19 @@ import ingredientController from './ingredient.controller';
 const IngredientRouter = express.Router();
 
 IngredientRouter.route('/ingredient')
-  .get(ingredientController.getIngredient)
-  .post(ingredientController.createIngredient);
+  .get(auth, authorize('admin'), ingredientController.getIngredient)
+  .post(auth, authorize('admin'), ingredientController.createIngredient);
 IngredientRouter.route('/ingredient/:id')
-  .patch(ingredientController.updateIngredient)
+  .patch(auth, authorize('admin'), ingredientController.updateIngredient)
   .delete(auth, authorize('admin'), ingredientController.deleteIngredient);
 
-IngredientRouter.route('/ingredient/upload').post(uploadFile, ingredientController.uploadIngredient);
+IngredientRouter.route('/ingredient/upload').post(
+  auth,
+  authorize('admin'),
+  uploadFile,
+  ingredientController.uploadIngredient
+);
 
-IngredientRouter.route('/ingredient/getall').get(ingredientController.getAll);
+IngredientRouter.route('/ingredient/getall').get(auth, authorize('admin'), ingredientController.getAll);
 
 export default IngredientRouter;

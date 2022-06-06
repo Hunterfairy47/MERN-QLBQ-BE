@@ -5,6 +5,7 @@ import { IDecodedToken } from '../../config/interface';
 import sendEmail from '../../config/senMail';
 import { generateAccessToken, generateActiveToken } from '../../utils/generateToken';
 import Result from '../../utils/result';
+import User from '../User/user.model';
 import Users from './auth.model';
 import { validateEmail } from './auth.validate';
 
@@ -73,21 +74,21 @@ const authController = {
   login: async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-      const user = await Users.findOne({ email });
+      // const user = await Users.findOne({ email });
+      const user = await User.findOne({ email });
 
       if (!user) {
-        return Result.error(res, { message: 'This account does not exits.' }, 401);
+        return Result.error(res, { message: 'This account does not exits.' });
       }
 
       //if user exits
       const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return Result.error(res, { message: 'Password is incorrect.' });
+      if (isMatch) {
+        const access_token = generateAccessToken(user);
+
+        Result.success(res, { access_token, user });
       }
-
-      const access_token = generateAccessToken(user);
-
-      Result.success(res, { access_token, user });
+      return Result.error(res, { message: 'Password is incorrect.' });
     } catch (error: any) {
       return Result.error(res, { message: error });
     }

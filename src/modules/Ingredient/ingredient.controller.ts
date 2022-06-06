@@ -3,7 +3,7 @@ import path from 'path';
 import readXlsxFile from 'read-excel-file/node';
 import { Ingredient } from '../../config/interface';
 import Result from '../../utils/result';
-import Dish from '../Dish/dish.model';
+import ingredientDishModel from '../IngredientDish/ingredientDish.model';
 import Nutritions from '../Nutrition/nutrition.model';
 import Ingredients from './ingredient.model';
 
@@ -177,10 +177,9 @@ const ingredientController = {
 
   deleteIngredient: async (req: Request, res: Response) => {
     try {
-      const dish = await Dish.findOne({ ingredients: req.params.id });
+      const dish = await ingredientDishModel.findOne({ ingredientId: req.params.id });
       if (dish)
-        return Result.error(res, { message: 'Can not delete ingredient. This ingredient is present in the dish.' });
-
+        return Result.error(res, { message: 'Không thể xoá. Nguyên liệu này hiện đang được sử dụng trong món ăn.' });
       const ingredient = await Ingredients.findOneAndDelete({ _id: req.params.id });
       if (!ingredient) return Result.error(res, { message: 'Ingredient does not exists!' });
       Result.success(res, { message: 'Delete Success!' });

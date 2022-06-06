@@ -45,7 +45,7 @@ const menuController = {
 
   getMenuDetailDate: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const date = moment(req.params.date, 'DD-MM-YYYY').format('DD/MM/YYYY');
+      const date = req.params.date;
       const menuId = ObjectId(req.params.menuid);
       const data = await MenuDetail.aggregate([
         {
@@ -288,12 +288,93 @@ const menuController = {
     } catch (error) {}
   },
 
+  getOneByDate: async (req: Request, res: Response) => {
+    try {
+      const startDate = req.body.startDate;
+
+      const trainingLevelId = req.body.trainingLevelId;
+      const menuId = await Menu.findOne({
+        startDate,
+        trainingLevelId,
+      });
+
+      const data = await Menu.aggregate([
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(menuId?._id),
+          },
+        },
+
+        {
+          $lookup: {
+            from: 'trainings',
+            localField: 'trainingLevelId',
+            foreignField: '_id',
+            as: 'trainingLevel',
+          },
+        },
+        {
+          $unwind: '$trainingLevel',
+        },
+
+        {
+          $lookup: {
+            from: 'menudetails',
+            localField: '_id',
+            foreignField: 'menuId',
+            as: 'menuDetails',
+          },
+        },
+        {
+          $unwind: { path: '$menuDetails', preserveNullAndEmptyArrays: true },
+        },
+
+        {
+          $lookup: {
+            from: 'dishes',
+            localField: 'menuDetails.dishId',
+            foreignField: '_id',
+            as: 'menuDetails.dish',
+          },
+        },
+        {
+          $unwind: { path: '$menuDetails.dish', preserveNullAndEmptyArrays: true },
+        },
+
+        {
+          $group: {
+            _id: null,
+            menuId: { $first: '$_id' },
+            startDate: { $first: '$startDate' },
+            endDate: { $first: '$endDate' },
+            trainingLevelName: { $first: '$trainingLevel.trainingName' },
+            menuDetail: {
+              $push: {
+                date: '$menuDetails.date',
+                dishes: {
+                  _id: '$menuDetails.dish._id',
+                  dishName: '$menuDetails.dish.dishName',
+                  englishName: '$menuDetails.dish.englishName',
+                },
+              },
+            },
+          },
+        },
+      ]);
+
+      Result.success(res, { data: data[0] });
+    } catch (error) {}
+  },
+
   createMenu: async (req: IReqAuth, res: Response, next: NextFunction) => {
     try {
-      const { menuName } = req.body;
+      const { menuName, startDate, endDate, trainingLevelId, baseId } = req.body;
       const menus = await Menu.findOne({ menuName });
       if (menus) return Result.error(res, { message: 'Menu already exists!' });
-      const newMenu = new Menu(req.body);
+      const newStartDate = moment(startDate).format('DD/MM/YYYY');
+      const newEndDate = moment(endDate).format('DD/MM/YYYY');
+
+      const newMenu = new Menu({ menuName, startDate: newStartDate, endDate: newEndDate, trainingLevelId, baseId });
       const data = await newMenu.save();
       Result.success(res, { data, message: 'Create success!' });
     } catch (error: any) {
@@ -304,6 +385,15 @@ const menuController = {
   createMenuDetail: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await menuDetailService.createMenuDetail(req.body);
+      Result.success(res, { data });
+    } catch (error: any) {
+      next(error);
+    }
+  },
+
+  updateMenuDetail: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const data = await menuDetailService.updateMenuDetail(req.body);
       Result.success(res, { data });
     } catch (error: any) {
       next(error);

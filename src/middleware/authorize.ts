@@ -5,7 +5,7 @@ const authorize = (role: string) => async (req: IReqAuth, res: Response, next: N
   try {
     if (!req.user) return res.status(400).json({ msg: 'Invalid Authentication.' });
 
-    if (req.user.role !== role) return res.status(400).json({ msg: ' UnAuthorize.' });
+    if (req.user.role !== role) return res.status(401).json({ msg: ' Bạn không có quyền truy cập!' });
     next();
   } catch (error: any) {
     return res.status(500).json({ msg: error.message });

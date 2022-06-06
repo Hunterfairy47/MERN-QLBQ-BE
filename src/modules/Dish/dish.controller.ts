@@ -10,6 +10,7 @@ import dishDetailService from '../DishDetail/dishDetail.service';
 import Ingredients from '../Ingredient/ingredient.model';
 import IngredientDish from '../IngredientDish/ingredientDish.model';
 import ingredientDishService from '../IngredientDish/ingredientDish.service';
+import menuDetailModel from '../MenuDetail/menuDetail.model';
 import Training from '../Training/training.model';
 import TypeDish from '../TypeDish/typeDish.model';
 import Dish from './dish.model';
@@ -393,6 +394,11 @@ const dishController = {
 
   deleteDish: async (req: Request, res: Response) => {
     try {
+      const menu = await menuDetailModel.findOne({ dishId: req.params.id });
+      if (menu) {
+        return Result.error(res, { message: 'Không thể xoá. Món ăn này hiện đang được sử dụng trong thực đơn.' });
+      }
+
       // Delete img on clound
       const dishImg = await Dish.findOne({ _id: req.params.id });
       const url = dishImg?.imgUrl;
@@ -423,6 +429,7 @@ const dishController = {
       if (req.file === undefined) {
         return Result.error(res, { message: 'Please up load an excel file!' });
       }
+      console.log(req.file);
 
       let excelFile = path.resolve(__dirname, '../../resources/static/ingredients/uploads/' + req.file.filename);
 

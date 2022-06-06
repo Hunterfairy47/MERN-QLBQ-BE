@@ -6,6 +6,7 @@ import MenuRouter from '../modules/Menu/menu.route';
 import NutritionRouter from '../modules/Nutrition/nutrition.route';
 import TrainingRouter from '../modules/Training/training.route';
 import TypeDishRouter from '../modules/TypeDish/typeDish.route';
+import UserRouter from '../modules/User/user.route';
 
 const routes = [
   AuthRouter,
@@ -16,6 +17,7 @@ const routes = [
   DishRouter,
   TrainingRouter,
   MenuRouter,
+  UserRouter,
 ];
 
 export default routes;
