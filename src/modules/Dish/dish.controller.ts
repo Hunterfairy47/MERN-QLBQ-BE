@@ -94,13 +94,24 @@ const dishController = {
 
       // Sort dish by training level
       let training = String(req.query._training);
-      const trainingLevel = await Training.findOne({ trainingName: training });
-      if (trainingLevel) {
-        aggregate_options.push({
-          $match: {
-            'trainingLevel._id': trainingLevel._id,
-          },
-        });
+      if (training === 'TH-THCS-THPT') {
+        const trainingLevel = await Training.findOne({ trainingId: training });
+        if (trainingLevel) {
+          aggregate_options.push({
+            $match: {
+              'trainingLevel._id': trainingLevel._id,
+            },
+          });
+        }
+      } else {
+        const trainingLevel = await Training.findOne({ trainingName: training });
+        if (trainingLevel) {
+          aggregate_options.push({
+            $match: {
+              'trainingLevel._id': trainingLevel._id,
+            },
+          });
+        }
       }
 
       // Pagination
@@ -301,8 +312,6 @@ const dishController = {
 
   createDish: async (req: IReqAuth, res: Response) => {
     try {
-      console.log(req.body);
-
       const { dishName, trainingLevelId, ingredients } = req.body;
       const dish = await Dish.findOne({ dishName });
       if (dish) return Result.error(res, { message: 'Dish already exists!' });
@@ -429,7 +438,6 @@ const dishController = {
       if (req.file === undefined) {
         return Result.error(res, { message: 'Please up load an excel file!' });
       }
-      console.log(req.file);
 
       let excelFile = path.resolve(__dirname, '../../resources/static/ingredients/uploads/' + req.file.filename);
 

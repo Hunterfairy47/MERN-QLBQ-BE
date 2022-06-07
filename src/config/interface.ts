@@ -71,6 +71,7 @@ export interface IReqAuth extends Request {
 export interface ITrainingLevel {
   _id: string;
   trainingName: string;
+  trainingId: string;
 }
 
 export interface IMenu {

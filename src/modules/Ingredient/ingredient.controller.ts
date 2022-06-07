@@ -223,8 +223,6 @@ const ingredientController = {
               nutritionId: key,
               nutritionValue: value,
             };
-            console.log(item);
-
             nutritionDetail.push(item);
           }
         });
@@ -245,7 +243,6 @@ const ingredientController = {
             standardMass: row[2],
             nutritionDetail: nutritionArr,
           });
-          console.log('row', ingredient);
           ingredients.push(ingredient);
         });
 

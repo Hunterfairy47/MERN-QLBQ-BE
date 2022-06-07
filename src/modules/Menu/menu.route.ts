@@ -10,7 +10,7 @@ MenuRouter.route('/menu')
   .post(auth, authorize('admin'), menuController.createMenu);
 MenuRouter.route('/menu/menudate').post(auth, menuController.getOneByDate);
 MenuRouter.route('/menu/:id')
-  .get(auth, authorize('admin'), menuController.getOne)
+  .get(menuController.getOne)
   .post(auth, authorize('admin'), menuController.createMenuDetail)
   .patch(auth, authorize('admin'), menuController.updateMenuDetail);
 MenuRouter.route('/menu/:menuid/edit/:date').get(auth, authorize('admin'), menuController.getMenuDetailDate);

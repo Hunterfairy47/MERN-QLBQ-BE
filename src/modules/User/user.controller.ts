@@ -36,13 +36,11 @@ const userController = {
       const checkUserPhone = await userService.getOneByPhone(phone);
 
       if (checkUserEmail) {
-        Result.error(res, { message: 'Email này đã tồn tại.' });
-        return;
+        return Result.error(res, { message: 'Email này đã tồn tại.' });
       }
 
       if (checkUserPhone) {
-        Result.error(res, { message: 'Số điện thoại này đã tồn tại.' });
-        return;
+        return Result.error(res, { message: 'Số điện thoại này đã tồn tại.' });
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
@@ -90,12 +88,13 @@ const userController = {
   uploadUsers: async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.file === undefined) {
-        Result.error(res, { message: 'Vui lòng tải lên một tệp excel.' });
-        return;
+        return Result.error(res, { message: 'Vui lòng tải lên một tệp excel.' });
       }
 
-      const usersList = await userService.upload(req.file.filename);
-      Result.success(res, { message: 'Đã tải tệp lên thành công.', data: usersList });
+      const { messageUpload } = await userService.upload(req.file.filename);
+      console.log('Controller', messageUpload);
+
+      Result.success(res, { message: messageUpload });
     } catch (err: any) {
       return next(err);
     }

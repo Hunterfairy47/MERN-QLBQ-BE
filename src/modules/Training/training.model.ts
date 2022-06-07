@@ -3,6 +3,10 @@ import { ITrainingLevel } from '../../config/interface';
 
 const trainingSchema = new mongoose.Schema(
   {
+    trainingId: {
+      type: String,
+      required: [true, 'Please add your Training Id'],
+    },
     trainingName: {
       type: String,
       required: [true, 'Please add your Training name'],

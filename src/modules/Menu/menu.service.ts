@@ -64,8 +64,6 @@ const exportExcel = async (data: DataExportProps) => {
   const test = await workbook.xlsx.writeFile(
     `${excelFile}/menuDetail-${moment(data.date, 'DD/MM/YYYY').format('DD-MM-YYYY')}.xlsx`
   );
-  console.log(test);
-
   return data;
 };
 

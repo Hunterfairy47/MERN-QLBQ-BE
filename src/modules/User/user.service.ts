@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import path from 'path';
 import readXlsxFile from 'read-excel-file/node';
 import { IUser } from '../../config/interface';
@@ -126,27 +127,37 @@ const deleteMany = async (userIds: string) => {
 
 const upload = async (filename: string) => {
   try {
-    console.log(filename);
-
     let fileExcel = path.resolve(__dirname, '../../resources/static/users/uploads/' + filename);
+    let usersList: IUser[] = [];
+    let messageUpload = '';
     readXlsxFile(fileExcel).then(async (rows) => {
+      // skip header
+      rows.shift();
       rows.shift();
       let users: IUser[] = [];
       for (const row of rows) {
-        let user = new userModel({
-          _id: row[1],
-          lastName: row[2],
-          firstName: row[3],
-          gender: row[4],
-          phone: row[5],
-          email: row[6],
-          position: row[7],
-        });
-        users.push(user);
+        let password = await bcrypt.hash(row[6] as string, 10);
+        const email = await userModel.findOne({ email: row[5] as string });
+        if (email) {
+          messageUpload = 'Vui lòng kiểm tra lại thông tin trong file.';
+          usersList = [];
+        } else {
+          let user = new userModel({
+            lastName: row[1],
+            firstName: row[2],
+            phone: row[3],
+            office: row[4],
+            email: row[5],
+            password,
+          });
+          users.push(user);
+        }
       }
-      const usersList = await userModel.create(users);
-      return usersList;
-    });
+
+      usersList = await userModel.create(users);
+    }); 
+    messageUpload = 'Đã tải tệp lên thành công.';
+    return { usersList, messageUpload };
   } catch (error) {
     throw error;
   }

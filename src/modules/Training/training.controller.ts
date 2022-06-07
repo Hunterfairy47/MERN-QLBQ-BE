@@ -2,12 +2,13 @@ import { NextFunction, Request, Response } from 'express';
 import { IReqAuth } from '../../config/interface';
 import Result from '../../utils/result';
 import Training from './training.model';
+import trainingService from './training.service';
 
 const trainingController = {
-  getTraining: async (req: Request, res: Response) => {
+  getTrainings: async (req: Request, res: Response) => {
     try {
-      const data = await Training.find();
-      Result.success(res, { data });
+      const { newTrainings, pagination } = await trainingService.getAll(req.query);
+      Result.success(res, { data: newTrainings, pagination });
     } catch (error) {
       return Result.error(res, { message: error });
     }
@@ -24,6 +25,26 @@ const trainingController = {
       Result.success(res, { message: 'Create success!' });
     } catch (error: any) {
       next(error);
+    }
+  },
+
+  updateTraining: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const trainingId = req.params.id;
+      await trainingService.update(trainingId, req.body);
+      Result.success(res, { message: 'Update Success!' });
+    } catch (err: any) {
+      return next(err);
+    }
+  },
+
+  deleteTraining: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const trainingId = req.params.id;
+      await trainingService.deleteOne(trainingId);
+      Result.success(res, { message: 'Delete Success!' });
+    } catch (err: any) {
+      return next(err);
     }
   },
 };

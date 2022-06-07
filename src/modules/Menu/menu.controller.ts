@@ -183,6 +183,7 @@ const menuController = {
             menuId: { $first: '$menuId' },
             date: { $first: '$date' },
             trainingLevelName: { $first: '$menu.training.trainingName' },
+            trainingId: { $first: '$menu.training.trainingId' },
             menuDetail: {
               $push: {
                 dishId: '$dish._id',
@@ -271,6 +272,7 @@ const menuController = {
             startDate: { $first: '$startDate' },
             endDate: { $first: '$endDate' },
             trainingLevelName: { $first: '$trainingLevel.trainingName' },
+            trainingId: { $first: '$trainingLevel.trainingId' },
             menuDetail: {
               $push: {
                 date: '$menuDetails.date',

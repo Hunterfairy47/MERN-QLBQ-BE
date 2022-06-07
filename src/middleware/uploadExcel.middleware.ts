@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import multer from 'multer';
 
-const DIR = 'src/resources/static/assets/uploads';
+const DIR = 'src/resources/static/users/uploads';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
